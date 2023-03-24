@@ -9,6 +9,8 @@ class Game {
     characterPos = []
     characterHP = 10
 
+    swordSteps = 0
+
     constructor() {
         this.field = document.getElementsByClassName("field").item(0)
         this.field.innerHTML = ``
@@ -68,7 +70,7 @@ class Game {
             }
             rows.add(r)
         }
-        while(cols.size < this.getRandomInt(3, 6)) {
+        while (cols.size < this.getRandomInt(3, 6)) {
             let c = this.getRandomInt(0, this.width)
             for (let i = 0; i < this.height; i++) {
                 this.gameField[i][c] = 0;
@@ -116,7 +118,7 @@ class Game {
             this.enemies[`${x}_${y}`] = 10
             let cell = document.getElementById(`${x}_${y}`)
             cell.className = 'tile tileE'
-            cell.innerHTML = `<div class='health' style='width: ${HEALTH_CELL*10}px'>`
+            cell.innerHTML = `<div class='health' style='width: ${HEALTH_CELL * 10}px'>`
             enemies.add(enemy)
         }
     }
@@ -130,11 +132,171 @@ class Game {
         this.emptyCells.delete(character)
         let cell = document.getElementById(`${x}_${y}`)
         cell.className = 'tile tileP'
-        cell.innerHTML = `<div class='health' style='width: ${HEALTH_CELL*10}px'>`
+        cell.innerHTML = `<div class='health' style='width: ${HEALTH_CELL * 10}px'>`
+    }
+
+    attackAllEnemies() {
+        for (let i = -1; i < 2; i++) {
+            let y = this.characterPos[1] + i
+            if (y < 0 || y >= this.width) {
+                continue;
+            }
+            for (let j = -1; j < 2; j++) {
+                if (i === 0 && j === 0) {
+                    continue;
+                }
+                console.log(this.enemies)
+
+                let x = this.characterPos[0] + j
+                if (x < 0 || x >= this.height) {
+                    continue;
+                }
+                console.log(x, y)
+                if (this.gameField[x][y] === 4) {
+                    this.enemies[`${x}_${y}`] -= this.swordSteps > 0 ? 3 : 1
+                    document.getElementById(`${x}_${y}`).innerHTML = `<div class='health' style='width: ${HEALTH_CELL * this.enemies[`${x}_${y}`]}px'>`
+                    if (this.enemies[`${x}_${y}`] < 1) {
+                        delete this.enemies[`${x}_${y}`]
+                        this.gameField[x][y] = 0
+                        document.getElementById(`${x}_${y}`).className = 'tile'
+                    }
+                }
+            }
+        }
+    }
+
+    attackCharacter(enemyPos) {
+        if (Math.abs(enemyPos[0] - this.characterPos[0]) < 2 && Math.abs(enemyPos[1] - this.characterPos[1]) < 2) {
+            this.characterHP -= 1
+            document.getElementById(`${this.characterPos[0]}_${this.characterPos[1]}`).innerHTML = `<div class='health' style='width: ${HEALTH_CELL * this.characterHP}px'>`
+            if (this.characterHP < 1) {
+
+            }
+            return true
+        }
+        return false;
+
+    }
+
+    movePerson(key, pos, enemy) {
+        const bannedCells = [1, 4, 5]
+        let position = [...pos]
+        console.log("aboba")
+        switch (key.toLowerCase()) {
+            case "1":
+            case "arrowup":
+            case "ц":
+            case "w" :
+                if (position[0] !== 0 && !bannedCells.includes(this.gameField[position[0] - 1][position[1]])) {
+                    let newCell = document.getElementById(`${position[0] - 1}_${position[1]}`)
+                    let oldCell = document.getElementById(`${position[0]}_${position[1]}`)
+                    newCell.className = enemy ? 'tile tileE' : 'tile tileP'
+                    oldCell.className = 'tile'
+                    newCell.innerHTML = oldCell.innerHTML
+                    oldCell.innerHTML = ``
+                    this.gameField[position[0] - 1][position[1]] = enemy ? 4 : 5
+                    this.gameField[position[0]][position[1]] = 0
+                    position[0] -= 1
+                }
+                //
+                break
+            case "2":
+            case "arrowdown":
+            case "ы":
+            case "s":
+                if (position[0] !== this.height - 1 && !bannedCells.includes(this.gameField[position[0] + 1][position[1]])) {
+                    let newCell = document.getElementById(`${position[0] + 1}_${position[1]}`)
+                    let oldCell = document.getElementById(`${position[0]}_${position[1]}`)
+                    newCell.className = enemy ? 'tile tileE' : 'tile tileP'
+                    oldCell.className = 'tile'
+                    newCell.innerHTML = oldCell.innerHTML
+                    oldCell.innerHTML = ``
+                    this.gameField[position[0] + 1][position[1]] = enemy ? 4 : 5
+                    this.gameField[position[0]][position[1]] = 0
+                    position[0] += 1
+                }
+                //
+                break
+            case "3":
+            case "arrowleft":
+            case "ф":
+            case "a":
+                if (position[1] !== 0 && !bannedCells.includes(this.gameField[position[0]][position[1] - 1])) {
+                    let newCell = document.getElementById(`${position[0]}_${position[1] - 1}`)
+                    let oldCell = document.getElementById(`${position[0]}_${position[1]}`)
+                    newCell.className = enemy ? 'tile tileE' : 'tile tileP'
+                    oldCell.className = 'tile'
+                    newCell.innerHTML = oldCell.innerHTML
+                    oldCell.innerHTML = ``
+                    this.gameField[position[0]][position[1] - 1] = enemy ? 4 : 5
+                    this.gameField[position[0]][position[1]] = 0
+                    position[1] -= 1
+                }
+                //
+                break
+            case "4":
+            case "arrowright":
+            case "в":
+            case "d":
+                if (position[1] !== this.width - 1 && !bannedCells.includes(this.gameField[position[0]][position[1] + 1])) {
+                    let newCell = document.getElementById(`${position[0]}_${position[1] + 1}`)
+                    let oldCell = document.getElementById(`${position[0]}_${position[1]}`)
+                    newCell.className = enemy ? 'tile tileE' : 'tile tileP'
+                    oldCell.className = 'tile'
+                    newCell.innerHTML = oldCell.innerHTML
+                    oldCell.innerHTML = ``
+                    this.gameField[position[0]][position[1] + 1] = enemy ? 4 : 5
+                    this.gameField[position[0]][position[1]] = 0
+                    position[1] += 1
+                }
+                //
+                break
+            default:
+                return [-1, -1]
+
+        }
+        return position
+    }
+
+    moveEnemies() {
+        for (let k in this.enemies) {
+
+            // TODO: fix enemies moving
+            let action = this.getRandomInt(0, 7)
+            let positionInt = k.split('_')
+            positionInt.forEach((v, i, a) => {
+                a[i] = parseInt(v)
+            })
+            if ([0, 5, 6].includes(action)) {
+                if (this.attackCharacter(positionInt))
+                    continue
+                action = this.getRandomInt(1, 5)
+            }
+
+
+            let npos = this.movePerson(`${action}`, positionInt, true)
+            let value = this.enemies[k]
+            delete this.enemies[k]
+            this.enemies[`${npos[0]}_${npos[1]}`] = value
+        }
     }
 
     move(key) {
-
+        if (key === ' ') {
+            this.attackAllEnemies()
+            this.moveEnemies()
+            return;
+        }
+        let newPos = this.movePerson(key, this.characterPos, false)
+        if (JSON.stringify(newPos) === JSON.stringify([-1, -1])) {
+            return;
+        }
+        if (JSON.stringify(newPos) === JSON.stringify(this.characterPos)) {
+            alert("Вы не можете пойти сюда")
+            return;
+        }
+        this.characterPos = newPos
+        this.moveEnemies()
     }
 
 }
