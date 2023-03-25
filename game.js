@@ -5,11 +5,11 @@ window.onload = () => {
     class Game {
         gameField = []
         emptyCells = new Set()
+        stackCells = {}
         enemies = {}
         characterPos = []
         characterHP = 10
         swordSteps = 0
-
         gameEnded = false
 
         constructor() {
@@ -48,7 +48,6 @@ window.onload = () => {
                 let randomHeight = this.getRandomInt(0, this.height)
                 let incWidth = Math.min(this.getRandomInt(3, 9), this.width - randomWidth)
                 let incHeight = Math.min(this.getRandomInt(3, 9), this.height - randomHeight)
-                console.log(randomWidth, randomHeight, incWidth)
                 for (let i = randomHeight; i < randomHeight + incHeight; i++) {
                     for (let j = randomWidth; j < randomWidth + incWidth; j++) {
                         this.gameField[i][j] = 0;
@@ -146,15 +145,13 @@ window.onload = () => {
                     if (i === 0 && j === 0) {
                         continue;
                     }
-                    console.log(this.enemies)
-
                     let x = this.characterPos[0] + j
                     if (x < 0 || x >= this.height) {
                         continue;
                     }
-                    console.log(x, y)
                     if (this.gameField[x][y] === 4) {
-                        this.enemies[`${x}_${y}`] -= this.swordSteps > 0 ? 3 : 1
+                        this.enemies[`${x}_${y}`] -= this.swordSteps > 0 ? 5 : 1
+                        this.swordSteps -= 1;
                         document.getElementById(`${x}_${y}`).innerHTML = `<div class='health' style='width: ${HEALTH_CELL * this.enemies[`${x}_${y}`]}px'>`
                         if (this.enemies[`${x}_${y}`] < 1) {
                             delete this.enemies[`${x}_${y}`]
@@ -176,7 +173,6 @@ window.onload = () => {
                 this.characterHP -= 1
                 document.getElementById(`${this.characterPos[0]}_${this.characterPos[1]}`).innerHTML = `<div class='health' style='width: ${HEALTH_CELL * this.characterHP}px'>`
                 if (this.characterHP < 1) {
-                    console.log(document.getElementById(`${this.characterPos[0]}_${this.characterPos[1]}`))
                     document.getElementById(`${this.characterPos[0]}_${this.characterPos[1]}`).className = 'tile'
                     this.gameEnded = true
                     setTimeout(() => alert("Вы проиграли!"))
@@ -240,17 +236,39 @@ window.onload = () => {
             oldCell.className = 'tile'
             newCell.innerHTML = oldCell.innerHTML
             oldCell.innerHTML = ``
-            this.gameField[gameFieldPos1][gameFieldPos2] = enemy ? 4 : 5
             this.gameField[position[0]][position[1]] = 0
+
+            if (this.stackCells[`${position[0]}_${position[1]}`]) {
+                oldCell.className = this.stackCells[`${position[0]}_${position[1]}`] === 2 ? 'tile tileSW' : 'tile tileHP'
+                this.gameField[position[0]][position[1]] = this.stackCells[`${position[0]}_${position[1]}`]
+                delete this.stackCells[`${position[0]}_${position[1]}`]
+            }
+
+            if (this.gameField[gameFieldPos1][gameFieldPos2] === 2) {
+                if (enemy) {
+                    this.stackCells[`${gameFieldPos1}_${gameFieldPos2}`] = 2
+                } else {
+                    this.swordSteps = 3
+                    this.gameField[gameFieldPos1][gameFieldPos2] = 5
+                }
+            }
+            if (this.gameField[gameFieldPos1][gameFieldPos2] === 3) {
+                if (enemy) {
+                    this.stackCells[`${gameFieldPos1}_${gameFieldPos2}`] = 3
+                } else {
+                    this.characterHP = 10
+                    newCell.innerHTML = `<div class='health' style='width: ${HEALTH_CELL * 10}px'>`
+                    this.gameField[gameFieldPos1][gameFieldPos2] = 5
+                }
+            }
+
+            this.gameField[gameFieldPos1][gameFieldPos2] = enemy ? 4 : 5
 
             return [gameFieldPos1, gameFieldPos2]
         }
 
         moveEnemies() {
             for (let k in this.enemies) {
-
-                // TODO: fix enemies moving
-
                 let positionInt = k.split('_')
                 positionInt.forEach((v, i, a) => {
                     a[i] = parseInt(v)
